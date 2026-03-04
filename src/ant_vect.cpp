@@ -7,6 +7,7 @@ double ants_vect::m_eps = 0.;
 void ants_vect::advance( pheronome& phen, const fractal_land& land, const position_t& pos_food, const position_t& pos_nest,
                    std::size_t& cpteur_food ) 
 {
+    #pragma omp parallel for
     for (std::size_t i = 0; i < m_positions.size(); ++i) {
         auto ant_choice = [this, i]() mutable { return rand_double( 0., 1., this->m_seeds[i] ); };
         auto dir_choice = [this, i]() mutable { return rand_int32( 1, 4, this->m_seeds[i] ); };

@@ -8,6 +8,9 @@
 # include "window.hpp"
 # include "rand_generator.hpp"
 #include <chrono>
+#if defined(_OPENMP)
+#include <omp.h>
+#endif
 
 struct time_measure {
     double total = 0.0;
@@ -76,7 +79,6 @@ int main(int nargs, char* argv[])
     std::size_t it = 0;
 
     T = {0., 0., 0.};
-
 
     while (cont_loop) {
         ++it;
