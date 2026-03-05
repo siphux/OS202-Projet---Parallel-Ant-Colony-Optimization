@@ -9,7 +9,7 @@ Window::Window(const char* title, int width, int height)
                                 height,
                                 SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
     if (m_window) {
-        m_renderer = SDL_CreateRenderer(m_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+        m_renderer = SDL_CreateRenderer(m_window, -1, 0);
     }
 }
 // ====================================================================================================================
