@@ -16,6 +16,9 @@ struct time_measure {
     double total = 0.0;
     double compute = 0.0;
     double render = 0.0;
+    double ants_move = 0.0;
+    double evaporation = 0.0;
+    double pheromones_update = 0.0;
 } T;
 
 
@@ -24,9 +27,16 @@ void advance_time( const fractal_land& land, pheronome& phen,
                    const position_t& pos_nest, const position_t& pos_food,
                    ants_vect& ants, std::size_t& cpteur )
 {
+    auto t_start_ants = std::chrono::high_resolution_clock::now();
     ants.advance(phen, land, pos_food, pos_nest, cpteur);
+    auto t_end_ants = std::chrono::high_resolution_clock::now();
     phen.do_evaporation();
+    auto t_end_evap = std::chrono::high_resolution_clock::now();
     phen.update();
+    auto t_end_update = std::chrono::high_resolution_clock::now();
+    T.ants_move += std::chrono::duration<double>(t_end_ants - t_start_ants).count();
+    T.evaporation += std::chrono::duration<double>(t_end_evap - t_end_ants).count();
+    T.pheromones_update += std::chrono::duration<double>(t_end_update - t_end_evap).count();
 }
 
 int main(int nargs, char* argv[])
@@ -87,6 +97,11 @@ int main(int nargs, char* argv[])
                 cont_loop = false;
         }
         auto t0 = std::chrono::high_resolution_clock::now();
+
+        double ants_move_before = T.ants_move;
+        double evap_before = T.evaporation;
+        double update_before = T.pheromones_update;
+
         advance_time( land, phen, pos_nest, pos_food, ants, food_quantity );
         auto t1 = std::chrono::high_resolution_clock::now();
 
@@ -98,13 +113,37 @@ int main(int nargs, char* argv[])
         T.render += std::chrono::duration<double>(t2-t1).count();
         T.total += std::chrono::duration<double>(t2-t0).count();
 
-        if (it%100 == 0)
-        {std::cout << "Iteration " << it << " : " << std::chrono::duration<double>(t1-t0).count()*1000 << "ms pour le calcul | "
-             << std::chrono::duration<double>(t2-t1).count()*1000 << "ms pour le rendu | " 
-             << std::chrono::duration<double>(t2-t0).count()*1000 << "ms au total (calcul + rendu)" << std::endl;
-        std::cout << "Moyenne : " << T.compute/it * 1000 << "ms pour le calcul | "
-             << T.render/it * 1000 << "ms pour le rendu | " << T.total/it * 1000 << "ms au total (calcul + rendu)" << std::endl;
+        double current_ants_move = T.ants_move - ants_move_before;
+        double current_evap = T.evaporation - evap_before;
+        double current_update = T.pheromones_update - update_before;
+        double current_compute = std::chrono::duration<double>(t1-t0).count();
+        double current_render = std::chrono::duration<double>(t2-t1).count();
+
+
+
+        if (it % 100 == 0) {
+            std::cout << "\n=== Iteration " << it << " ===" << std::endl;
+            
+            std::cout << "[Temps de l'iteration courante]" << std::endl;
+            std::cout << "  Déplacement fourmis : " << current_ants_move * 1000 << " ms" << std::endl;
+            std::cout << "  Évaporation         : " << current_evap * 1000 << " ms" << std::endl;
+            std::cout << "  Mise à jour phéro   : " << current_update * 1000 << " ms" << std::endl;
+            std::cout << "  Temps Calcul        : " << current_compute * 1000 << " ms" << std::endl;
+            std::cout << "  Temps rendu         : " << current_render * 1000 << " ms" << std::endl;
+            std::cout << "  Temps total         : " << std::chrono::duration<double>(t2-t0).count() * 1000 << " ms" << std::endl;
+
+
+            std::cout << "\n[Temps moyen]" << std::endl;
+            std::cout << "  Déplacement fourmis : " << (T.ants_move / it) * 1000 << " ms" << std::endl;
+            std::cout << "  Évaporation         : " << (T.evaporation / it) * 1000 << " ms" << std::endl;
+            std::cout << "  Mise à jour phéro   : " << (T.pheromones_update / it) * 1000 << " ms" << std::endl;
+            std::cout << "  Temps Calcul        : " << (T.compute / it) * 1000 << " ms" << std::endl;
+            std::cout << "  Temps rendu         : " << (T.render / it) * 1000 << " ms" << std::endl;
+            std::cout << "  Temps total         : " << (T.total / it) * 1000 << " ms" << std::endl;
+            std::cout << "========================\n" << std::endl;
         }
+
+
         if ( not_food_in_nest && food_quantity > 0 ) {
             std::cout << "La première nourriture est arrivée au nid a l'iteration " << it << " après " << T.total << " secondes." << std::endl;
             not_food_in_nest = false;
