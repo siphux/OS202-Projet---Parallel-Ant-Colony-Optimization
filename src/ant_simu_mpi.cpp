@@ -116,7 +116,7 @@ int main(int nargs, char* argv[])
     Window* win = nullptr;
     Renderer* renderer = nullptr;
     if (rank == 0){
-        win = new Window("Ant Simulation (vectorized)", 2*land.dimensions()+10, land.dimensions()+266);
+        win = new Window("Ant Simulation (MPI version)", 2*land.dimensions()+10, land.dimensions()+266);
         renderer = new Renderer( land, phen, pos_nest, pos_food, ants );
     }
     // Compteur de la quantité de nourriture apportée au nid par les fourmis
