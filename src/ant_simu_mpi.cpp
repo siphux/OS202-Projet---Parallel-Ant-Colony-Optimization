@@ -45,6 +45,7 @@ void advance_time( const fractal_land& land, pheronome& phen,
     int local_rows = row_per_proc + (rank < rem ? 1 : 0);
     phen.do_evaporation_mpi(start_row, start_row + local_rows);
     auto t_end_evap = std::chrono::high_resolution_clock::now();
+
     auto t_start_sync2 = std::chrono::high_resolution_clock::now();
     phen.sync_evaporation_mpi(start_row, local_rows, size, rank);
     auto t_end_sync2 = std::chrono::high_resolution_clock::now();
@@ -52,9 +53,9 @@ void advance_time( const fractal_land& land, pheronome& phen,
     auto t_end_update = std::chrono::high_resolution_clock::now();
     T.ants_move += std::chrono::duration<double>(t_end_ants - t_start_ants).count();
     T.mpi_comms += std::chrono::duration<double>(t_end_sync1 - t_start_sync1).count();
-    T.evaporation += std::chrono::duration<double>(t_end_evap - t_end_ants).count();
+    T.evaporation += std::chrono::duration<double>(t_end_evap - t_end_sync1).count();
     T.mpi_comms += std::chrono::duration<double>(t_end_sync2 - t_start_sync2).count();
-    T.pheromones_update += std::chrono::duration<double>(t_end_update - t_end_evap).count();
+    T.pheromones_update += std::chrono::duration<double>(t_end_update - t_end_sync2).count();
 }
 
 int main(int nargs, char* argv[])
@@ -69,7 +70,7 @@ int main(int nargs, char* argv[])
     }
 
     std::size_t seed = 2026; // Graine pour la génération aléatoire ( reproductible )
-    const int nb_ants = 5000; // Nombre de fourmis
+    const int nb_ants = 500000; // Nombre de fourmis
     const double eps = 0.8;  // Coefficient d'exploration
     const double alpha=0.7; // Coefficient de chaos
     //const double beta=0.9999; // Coefficient d'évaporation
@@ -166,7 +167,7 @@ int main(int nargs, char* argv[])
         T.compute += std::chrono::duration<double>(t1-t0).count();  //double donc renvoie des secondes
         T.render += std::chrono::duration<double>(t2-t1).count();
         T.total += std::chrono::duration<double>(t2-t0).count();
-        T.mpi_comms += std::chrono::duration<double>(t_reduce - t1).count();
+        T.mpi_comms += std::chrono::duration<double>(t1 - t_reduce).count();
 
         if (rank == 0){
             double current_ants_move = T.ants_move - ants_move_before;  
